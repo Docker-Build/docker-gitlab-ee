@@ -3,6 +3,97 @@
 This file only reflects the changes that are made in this image. Please refer to the upstream GitLab [CHANGELOG](
 https://gitlab.com/gitlab-org/gitlab-foss/blob/master/CHANGELOG.md) for the list of changes in GitLab.
 
+**14.1.0**
+- gitlab: upgrade CE to v14.1.0
+- gitaly: upgrade to v14.1.0
+
+**14.0.6**
+- gitlab: upgrade CE to v14.0.6
+- gitaly: upgrade to v14.0.6
+- golang: upgrade to v1.16.6
+
+**14.0.5**
+- gitlab: upgrade CE to v14.0.5
+- gitaly: upgrade to v14.0.5
+
+**14.0.4**
+- gitlab: upgrade CE to v14.0.4
+- gitaly: upgrade to v14.0.4
+
+**14.0.3**
+- gitlab: upgrade CE to v14.0.3
+- gitaly: upgrade to v14.0.3
+
+**14.0.2**
+- gitlab: upgrade CE to v14.0.2
+- gitaly: upgrade to v14.0.2
+
+**14.0.1**
+- gitlab: upgrade CE to v14.0.1
+- gitaly: upgrade to v14.0.1
+
+**14.0.0**
+- gitlab: upgrade CE to v14.0.0
+- gitaly: upgrade to v14.0.0
+- gitlab-shell: upgrade to v13.19.0
+- gitlab-pages: upgrade to v1.40.0
+
+**13.12.5**
+- gitlab: upgrade CE to v13.12.5
+- gitaly: upgrade to v13.12.5
+- ubuntu: upgrade to focal-20210609
+
+**13.12.4**
+- gitlab: upgrade CE to v13.12.4
+- gitaly: upgrade to v13.12.4
+
+**13.12.3**
+- gitlab: upgrade CE to v13.12.3
+- gitaly: upgrade to v13.12.3
+- golang: upgrade to v1.16.5
+
+**13.12.2**
+- gitlab: upgrade CE to v13.12.2
+- gitaly: upgrade to v13.12.2
+
+**13.12.1**
+- gitlab: upgrade CE to v13.12.1
+- gitaly: upgrade to v13.12.1
+
+**13.12.0**
+- gitlab: upgrade CE to v13.12.0
+- gitlab-shell: upgrade to v13.18.0
+- gitlab-pages: upgrade to v1.39.0
+- gitaly: upgrade to v13.12.0
+
+**13.11.4**
+- gitlab: upgrade CE to v13.11.4
+- gitaly: upgrade to v13.11.4
+- golang: upgrade to v1.16.4
+- ubuntu: upgrade to focal-20210416
+
+**13.11.3**
+- gitlab: upgrade CE to v13.11.3
+- gitaly: upgrade to v13.11.3
+
+**13.11.2**
+- gitlab: upgrade CE to v13.11.2
+- gitaly: upgrade to v13.11.2
+
+**13.11.1**
+- gitlab: upgrade CE to v13.11.1
+- gitaly: upgrade to v13.11.1
+
+**13.11.0**
+- gitlab: upgrade CE to v13.11.0
+- gitaly: upgrade to v13.11.0
+- gitlab-pages: upgrade to v1.38.0
+- ubuntu: upgrade to focal-20210401
+
+**13.10.3**
+- gitlab: upgrade CE to v13.10.3
+- gitaly: upgrade to v13.10.3
+
 **13.10.2**
 - gitlab: upgrade CE to v13.10.2
 - gitaly: upgrade to v13.10.2
