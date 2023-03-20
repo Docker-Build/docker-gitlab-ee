@@ -53,25 +53,25 @@ production: &base
     # Content Security Policy
     # See https://guides.rubyonrails.org/security.html#content-security-policy
     content_security_policy:
-      enabled: true
-      report_only: false
+      enabled: {{GITLAB_CONTENT_SECURITY_POLICY_ENABLED}}
+      report_only: {{GITLAB_CONTENT_SECURITY_POLICY_REPORT_ONLY}}
       directives:
-        base_uri:
-        child_src:
-        connect_src: "'self' http://localhost:* ws://localhost:* wss://localhost:*"
-        default_src: "'self'"
-        font_src:
-        form_action:
-        frame_ancestors: "'self'"
-        frame_src: "'self' https://www.google.com/recaptcha/ https://www.recaptcha.net/ https://content.googleapis.com https://content-compute.googleapis.com https://content-cloudbilling.googleapis.com https://content-cloudresourcemanager.googleapis.com"
-        img_src: "* data: blob:"
-        manifest_src:
-        media_src:
-        object_src: "'none'"
-        script_src: "'self' 'unsafe-eval' http://localhost:* https://www.google.com/recaptcha/ https://www.recaptcha.net/ https://www.gstatic.com/recaptcha/ https://apis.google.com"
-        style_src: "'self' 'unsafe-inline'"
-        worker_src: "'self' blob:"
-        report_uri:
+        base_uri: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_BASE_URI}}"
+        child_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_CHILD_SRC}}"
+        connect_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_CONNECT_SRC}}"
+        default_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_DEFAULT_SRC}}"
+        font_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_FONT_SRC}}"
+        form_action: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_FORM_ACTION}}"
+        frame_ancestors: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_FRAME_ANCESTORS}}"
+        frame_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_FRAME_SRC}}"
+        img_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_IMG_SRC}}"
+        manifest_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_MANIFEST_SRC}}"
+        media_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_MEDIA_SRC}}"
+        object_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_OBJECT_SRC}}"
+        script_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_SCRIPT_SRC}}"
+        style_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_STYLE_SRC}}"
+        worker_src: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_WORKER_SRC}}"
+        report_uri: "{{GITLAB_CONTENT_SECURITY_POLICY_DIRECTIVES_REPORT_URI}}"
 
     # Trusted Proxies
     # Customize if you have GitLab behind a reverse proxy which is running on a different machine.
@@ -138,7 +138,7 @@ production: &base
     # This happens when the commit is pushed or merged into the default branch of a project.
     # When not specified the default issue_closing_pattern as specified below will be used.
     # Tip: you can test your closing pattern at http://rubular.com.
-    # issue_closing_pattern: '\b((?:[Cc]los(?:e[sd]?|ing)|\b[Ff]ix(?:e[sd]|ing)?|\b[Rr]esolv(?:e[sd]?|ing)|\b[Ii]mplement(?:s|ed|ing)?)(:?) +(?:(?:issues? +)?%{issue_ref}(?:(?:, *| +and +)?)|([A-Z][A-Z0-9_]+-\d+))+)'
+    issue_closing_pattern: '{{GITLAB_ISSUE_CLOSING_PATTERN}}'
 
     ## Default project features settings
     default_projects_features:
@@ -229,7 +229,7 @@ production: &base
         aws_secret_access_key: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_SECRET_ACCESS_KEY}}
         region: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_REGION}}
         host: '{{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_HOST}}' # default: s3.amazonaws.com
-        aws_signature_version: 4 # For creation of signed URLs. Set to 2 if provider does not support v4.
+        aws_signature_version: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_SIGNATURE_VERSION}} # For creation of signed URLs. Set to 2 if provider does not support v4.
         endpoint: '{{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_ENDPOINT}}' # default: nil - Useful for S3 compliant services such as DigitalOcean Spaces
         path_style: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_AWS_PATH_STYLE}} # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
         #end-artifacts-aws
@@ -273,6 +273,7 @@ production: &base
         #start-lfs-aws
         aws_access_key_id: {{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_ACCESS_KEY_ID}}
         aws_secret_access_key: {{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_SECRET_ACCESS_KEY}}
+        aws_signature_version: {{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_SIGNATURE_VERSION}} # For creation of signed URLs. Set to 2 if provider does not support v4.
         region: {{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_REGION}}
         host: '{{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_HOST}}' # default: s3.amazonaws.com
         endpoint: '{{GITLAB_LFS_OBJECT_STORE_CONNECTION_AWS_ENDPOINT}}' # default: nil
@@ -306,39 +307,47 @@ production: &base
         #start-uploads-aws
         aws_access_key_id: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_ACCESS_KEY_ID}}
         aws_secret_access_key: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_SECRET_ACCESS_KEY}}
-        aws_signature_version: 4 # For creation of signed URLs. Set to 2 if provider does not support v4.
+        aws_signature_version: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_SIGNATURE_VERSION}} # For creation of signed URLs. Set to 2 if provider does not support v4.
         region: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_REGION}}
         host: '{{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_HOST}}' # default: s3.amazonaws.com
         endpoint: '{{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_ENDPOINT}}' # default: nil
         path_style: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_AWS_PATH_STYLE}} # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
         #end-uploads-aws
         #start-uploads-gcs
-        google_project: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_GOOGLE_PROJECT}}
-        google_client_email: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_GOOGLE_CLIENT_EMAIL}}
-        google_json_key_location: {{GITLAB_ARTIFACTS_OBJECT_STORE_CONNECTION_GOOGLE_JSON_KEY_LOCATION}}
+        google_project: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_GOOGLE_PROJECT}}
+        google_client_email: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_GOOGLE_CLIENT_EMAIL}}
+        google_json_key_location: {{GITLAB_UPLOADS_OBJECT_STORE_CONNECTION_GOOGLE_JSON_KEY_LOCATION}}
         #end-uploads-gcs
 
   ## Packages (maven repository, npm registry, etc...)
   packages:
-    enabled: true
+    enabled: {{GITLAB_PACKAGES_ENABLED}}
     # The location where build packages are stored (default: shared/packages).
-    # storage_path: shared/packages
+    path: {{GITLAB_PACKAGES_DIR}}
     object_store:
-      enabled: false
-      remote_directory: packages # The bucket name
-      # direct_upload: false # Use Object Storage directly for uploads instead of background uploads if enabled (Default: false)
-      # background_upload: false # Temporary option to limit automatic upload (Default: true)
-      # proxy_download: false # Passthrough all downloads via GitLab instead of using Redirects to Object Storage
+      enabled: {{GITLAB_PACKAGES_OBJECT_STORE_ENABLED}}
+      remote_directory: {{GITLAB_PACKAGES_OBJECT_STORE_REMOTE_DIRECTORY}} # The bucket name
+      direct_upload: {{GITLAB_PACKAGES_OBJECT_STORE_DIRECT_UPLOAD}} # Set to true to enable direct upload of Packages without the need of local shared storage.
+      background_upload: {{GITLAB_PACKAGES_OBJECT_STORE_BACKGROUND_UPLOAD}} # Temporary option to limit automatic upload (Default: true)
+      proxy_download: {{GITLAB_PACKAGES_OBJECT_STORE_PROXY_DOWNLOAD}} # Passthrough all downloads via GitLab instead of using Redirects to Object Storage
       connection:
-        provider: AWS
-        aws_access_key_id: AWS_ACCESS_KEY_ID
-        aws_secret_access_key: AWS_SECRET_ACCESS_KEY
-        region: us-east-1
-        # host: 'localhost' # default: s3.amazonaws.com
-        # endpoint: 'http://127.0.0.1:9000' # default: nil
-        # aws_signature_version: 4 # For creation of signed URLs. Set to 2 if provider does not support v4.
-        # path_style: true # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
+        provider: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_PROVIDER}} # Only AWS supported at the moment
+        #start-packages-aws
+        aws_access_key_id: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_ACCESS_KEY_ID}}
+        aws_secret_access_key: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_SECRET_ACCESS_KEY}}
+        region: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_REGION}}
+        host: '{{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_HOST}}' # default: s3.amazonaws.com
+        aws_signature_version: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_SIGNATURE_VERSION}} # For creation of signed URLs. Set to 2 if provider does not support v4.
+        endpoint: '{{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_ENDPOINT}}' # default: nil - Useful for S3 compliant services such as DigitalOcean Spaces
+        path_style: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_AWS_PATH_STYLE}} # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
+        #end-packages-aws
+        #start-packages-gcs
+        google_project: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_GOOGLE_PROJECT}}
+        google_client_email: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_GOOGLE_CLIENT_EMAIL}}
+        google_json_key_location: {{GITLAB_PACKAGES_OBJECT_STORE_CONNECTION_GOOGLE_JSON_KEY_LOCATION}}
+        #end-packages-gcs
 
+  
   ## Dependency Proxy
   dependency_proxy:
     enabled: true
@@ -362,21 +371,28 @@ production: &base
 
   ## Terraform state
   terraform_state:
-    enabled: true
+    enabled: {{GITLAB_TERRAFORM_STATE_ENABLED}}
     # The location where Terraform state files are stored (default: shared/terraform_state).
-    # storage_path: shared/terraform_state
+    storage_path: {{GITLAB_TERRAFORM_STATE_STORAGE_PATH}}
     object_store:
-      enabled: false
-      remote_directory: terraform_state # The bucket name
+      enabled: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_ENABLED}}
+      remote_directory: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_REMOTE_DIRECTORY}} # The bucket name
       connection:
-        provider: AWS
-        aws_access_key_id: AWS_ACCESS_KEY_ID
-        aws_secret_access_key: AWS_SECRET_ACCESS_KEY
-        region: us-east-1
-        # host: 'localhost' # default: s3.amazonaws.com
-        # endpoint: 'http://127.0.0.1:9000' # default: nil
-        # aws_signature_version: 4 # For creation of signed URLs. Set to 2 if provider does not support v4.
-        # path_style: true # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
+        provider: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_PROVIDER}}
+        #start-terraform_state-aws
+        aws_access_key_id: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_ACCESS_KEY_ID}}
+        aws_secret_access_key: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_SECRET_ACCESS_KEY}}
+        region: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_REGION}}
+        host: '{{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_HOST}}' # default: s3.amazonaws.com
+        endpoint: '{{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_ENDPOINT}}' # default: nil
+        aws_signature_version: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_SIGNATURE_VERSION}} # For creation of signed URLs. Set to 2 if provider does not support v4.
+        path_style: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_AWS_PATH_STYLE}} # Use 'host/bucket_name/object' instead of 'bucket_name.host/object'
+        #end-terraform_state-aws
+        #start-terraform_state-gcs
+        google_project: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_GOOGLE_PROJECT}}
+        google_client_email: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_GOOGLE_CLIENT_EMAIL}}
+        google_json_key_location: {{GITLAB_TERRAFORM_STATE_OBJECT_STORE_CONNECTION_GOOGLE_JSON_KEY_LOCATION}}
+        #end-terraform_state-gcs
 
   ## GitLab Pages
   pages:
@@ -593,7 +609,7 @@ production: &base
   #   bundle exec rake gitlab:ldap:check RAILS_ENV=production
   ldap:
     enabled: {{LDAP_ENABLED}}
-    prevent_ldap_sign_in: false
+    prevent_ldap_sign_in: {{LDAP_PREVENT_LDAP_SIGN_IN}}
 
     # This setting controls the number of seconds between LDAP permission checks
     # for each user. After this time has expired for a given user, their next
@@ -883,6 +899,12 @@ production: &base
     # (default: false)
     auto_link_saml_user: {{OAUTH_AUTO_LINK_SAML_USER}}
 
+    # Allow users with existing accounts to login and auto link their account via the
+    # defined Omniauth providers login, without having to do a manual login first and
+    # manually connect their chosen provider.
+    # (default: [])
+    auto_link_user: [{{OAUTH_AUTO_LINK_USER}}]
+
     # Set different Omniauth providers as external so that all users creating accounts
     # via these providers will not be able to have access to internal projects. You
     # will need to use the full name of the provider, like `google_oauth2` for Google.
@@ -1001,6 +1023,12 @@ production: &base
             client_id: '{{OAUTH_AZURE_API_KEY}}',
             client_secret: '{{OAUTH_AZURE_API_SECRET}}',
             tenant_id: '{{OAUTH_AZURE_TENANT_ID}}' } }
+      - { name: 'azure_activedirectory_v2',
+          label: '{{OAUTH_AZURE_ACTIVEDIRECTORY_V2_LABEL}}',
+          args: {
+            client_id: '{{OAUTH_AZURE_ACTIVEDIRECTORY_V2_CLIENT_ID}}',
+            client_secret: '{{OAUTH_AZURE_ACTIVEDIRECTORY_V2_CLIENT_SECRET}}',
+            tenant_id: '{{OAUTH_AZURE_ACTIVEDIRECTORY_V2_TENANT_ID}}' } }
 
     # SSO maximum session duration in seconds. Defaults to CAS default of 8 hours.
     # cas3:
@@ -1125,7 +1153,7 @@ production: &base
   # CAUTION!
   # Use the default values unless you really know what you are doing
   git:
-    bin_path: /usr/bin/git
+    bin_path: /usr/local/bin/git
 
   ## ActionCable settings
   action_cable:
