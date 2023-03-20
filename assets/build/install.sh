@@ -10,6 +10,8 @@ GITLAB_WORKHORSE_BUILD_DIR=${GITLAB_INSTALL_DIR}/workhorse
 GITLAB_PAGES_BUILD_DIR=/tmp/gitlab-pages
 GITLAB_GITALY_BUILD_DIR=/tmp/gitaly
 
+RUBY_SRC_URL=https://cache.ruby-lang.org/pub/ruby/${RUBY_VERSION%.*}/ruby-${RUBY_VERSION}.tar.gz
+
 GEM_CACHE_DIR="${GITLAB_BUILD_DIR}/cache"
 
 GOROOT=/tmp/go
@@ -18,11 +20,12 @@ PATH=${GOROOT}/bin:$PATH
 export GOROOT PATH
 
 BUILD_DEPENDENCIES="gcc g++ make patch pkg-config cmake paxctl \
-  libc6-dev ruby${RUBY_VERSION}-dev \
+  libc6-dev \
   libpq-dev zlib1g-dev libyaml-dev libssl-dev \
   libgdbm-dev libreadline-dev libncurses5-dev libffi-dev \
   libxml2-dev libxslt-dev libcurl4-openssl-dev libicu-dev \
-  gettext libkrb5-dev"
+  gettext libkrb5-dev \
+  libexpat1-dev libz-dev libpcre2-dev build-essential git"
 
 ## Execute a command as GITLAB_USER
 exec_as_git() {
@@ -37,11 +40,23 @@ exec_as_git() {
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES}
 
+# build ruby from source
+echo "Building ruby v${RUBY_VERSION} from source..."
+PWD_ORG="$PWD"
+mkdir /tmp/ruby && cd /tmp/ruby
+curl --remote-name -Ss "${RUBY_SRC_URL}"
+printf '%s ruby-%s.tar.gz' "${RUBY_SOURCE_SHA256SUM}" "${RUBY_VERSION}" | sha256sum -c -
+tar xzf ruby-"${RUBY_VERSION}".tar.gz && cd ruby-"${RUBY_VERSION}"
+./configure --disable-install-rdoc --enable-shared
+make -j"$(nproc)"
+make install
+cd "$PWD_ORG" && rm -rf /tmp/ruby
+
 # PaX-mark ruby
 # Applying the mark late here does make the build usable on PaX kernels, but
 # still the build itself must be executed on a non-PaX kernel. It's done here
 # only for simplicity.
-paxctl -cvm "$(command -v ruby${RUBY_VERSION})"
+paxctl -cvm "$(command -v ruby)"
 # https://en.wikibooks.org/wiki/Grsecurity/Application-specific_Settings#Node.js
 paxctl -cvm "$(command -v node)"
 
@@ -62,18 +77,24 @@ exec_as_git git config --global core.autocrlf input
 exec_as_git git config --global gc.auto 0
 exec_as_git git config --global repack.writeBitmaps true
 exec_as_git git config --global receive.advertisePushOptions true
+exec_as_git git config --global advice.detachedHead false
+exec_as_git git config --global --add safe.directory /home/git/gitlab
 
 # shallow clone gitlab-foss
 echo "Cloning gitlab-foss v.${GITLAB_VERSION}..."
 exec_as_git git clone -q -b v${GITLAB_VERSION} --depth 1 ${GITLAB_CLONE_URL} ${GITLAB_INSTALL_DIR}
 
-if [[ -d "${GITLAB_BUILD_DIR}/patches" ]]; then
-echo "Applying patches for gitlab-foss..."
-exec_as_git git -C ${GITLAB_INSTALL_DIR} apply --ignore-whitespace < ${GITLAB_BUILD_DIR}/patches/*.patch
-fi
+find "${GITLAB_BUILD_DIR}/patches/" -name "*.patch" | while read -r patch_file; do
+  printf "Applying patch %s for gitlab-foss...\n" "${patch_file}"
+  exec_as_git git -C ${GITLAB_INSTALL_DIR} apply --ignore-whitespace < "${patch_file}"
+done
 
 GITLAB_SHELL_VERSION=${GITLAB_SHELL_VERSION:-$(cat ${GITLAB_INSTALL_DIR}/GITLAB_SHELL_VERSION)}
 GITLAB_PAGES_VERSION=${GITLAB_PAGES_VERSION:-$(cat ${GITLAB_INSTALL_DIR}/GITLAB_PAGES_VERSION)}
+
+# install bundler: use version specified in Gemfile.lock
+BUNDLER_VERSION="$(grep "BUNDLED WITH" ${GITLAB_INSTALL_DIR}/Gemfile.lock -A 1 | grep -v "BUNDLED WITH" | tr -d "[:space:]")"
+gem install bundler:"${BUNDLER_VERSION}"
 
 # download golang
 echo "Downloading Go ${GOLANG_VERSION}..."
@@ -92,7 +113,9 @@ cd ${GITLAB_SHELL_INSTALL_DIR}
 exec_as_git cp -a config.yml.example config.yml
 
 echo "Compiling gitlab-shell golang executables..."
-exec_as_git bundle install -j"$(nproc)" --deployment --with development test
+exec_as_git bundle config set --local deployment 'true'
+exec_as_git bundle config set --local with 'development test'
+exec_as_git bundle install -j"$(nproc)"
 exec_as_git "PATH=$PATH" make verify setup
 
 # remove unused repositories directory created by gitlab-shell install
@@ -100,6 +123,7 @@ rm -rf ${GITLAB_HOME}/repositories
 
 # build gitlab-workhorse
 echo "Build gitlab-workhorse"
+git config --global --add safe.directory /home/git/gitlab
 make -C ${GITLAB_WORKHORSE_BUILD_DIR} install
 # clean up
 rm -rf ${GITLAB_WORKHORSE_BUILD_DIR}
@@ -127,6 +151,9 @@ cp -a ${GITLAB_GITALY_BUILD_DIR}/config.toml.example ${GITLAB_GITALY_INSTALL_DIR
 rm -rf ${GITLAB_GITALY_INSTALL_DIR}/ruby/vendor/bundle/ruby/**/cache
 chown -R ${GITLAB_USER}: ${GITLAB_GITALY_INSTALL_DIR}
 
+# install git bundled with gitaly.
+make -C ${GITLAB_GITALY_BUILD_DIR} git GIT_PREFIX=/usr/local
+
 # clean up
 rm -rf ${GITLAB_GITALY_BUILD_DIR}
 
@@ -140,6 +167,9 @@ exec_as_git sed -i "/headers\['Strict-Transport-Security'\]/d" ${GITLAB_INSTALL_
 # revert `rake gitlab:setup` changes from gitlabhq/gitlabhq@a54af831bae023770bf9b2633cc45ec0d5f5a66a
 exec_as_git sed -i 's/db:reset/db:setup/' ${GITLAB_INSTALL_DIR}/lib/tasks/gitlab/setup.rake
 
+# change SSH_ALGORITHM_PATH - we have moved host keys in ${GITLAB_DATA_DIR}/ssh/ to persist them
+exec_as_git sed -i "s:/etc/ssh/:/${GITLAB_DATA_DIR}/ssh/:g" ${GITLAB_INSTALL_DIR}/app/models/instance_configuration.rb
+
 cd ${GITLAB_INSTALL_DIR}
 
 # install gems, use local cache if available
@@ -149,7 +179,9 @@ if [[ -d ${GEM_CACHE_DIR} ]]; then
   chown -R ${GITLAB_USER}: ${GITLAB_INSTALL_DIR}/vendor/cache
 fi
 
-exec_as_git bundle install -j"$(nproc)" --deployment --without development test mysql aws
+exec_as_git bundle config set --local deployment 'true'
+exec_as_git bundle config set --local without 'development test mysql aws'
+exec_as_git bundle install -j"$(nproc)"
 
 # make sure everything in ${GITLAB_HOME} is owned by ${GITLAB_USER} user
 chown -R ${GITLAB_USER}: ${GITLAB_HOME}
@@ -157,7 +189,11 @@ chown -R ${GITLAB_USER}: ${GITLAB_HOME}
 # gitlab.yml and database.yml are required for `assets:precompile`
 exec_as_git cp ${GITLAB_INSTALL_DIR}/config/resque.yml.example ${GITLAB_INSTALL_DIR}/config/resque.yml
 exec_as_git cp ${GITLAB_INSTALL_DIR}/config/gitlab.yml.example ${GITLAB_INSTALL_DIR}/config/gitlab.yml
-exec_as_git cp ${GITLAB_INSTALL_DIR}/config/database.yml.postgresql ${GITLAB_INSTALL_DIR}/config/database.yml
+#
+# Temporary workaround, see <https://github.com/sameersbn/docker-gitlab/pull/2596>
+#
+# exec_as_git cp ${GITLAB_INSTALL_DIR}/config/database.yml.postgresql ${GITLAB_INSTALL_DIR}/config/database.yml
+exec_as_git cp ${GITLAB_BUILD_DIR}/config/database.yml.postgresql ${GITLAB_INSTALL_DIR}/config/database.yml
 
 # Installs nodejs packages required to compile webpack
 exec_as_git yarn install --production --pure-lockfile
@@ -214,6 +250,10 @@ echo "UseDNS no" >> /etc/ssh/sshd_config
 
 # move supervisord.log file to ${GITLAB_LOG_DIR}/supervisor/
 sed -i "s|^[#]*logfile=.*|logfile=${GITLAB_LOG_DIR}/supervisor/supervisord.log ;|" /etc/supervisor/supervisord.conf
+
+# prevent confusing warning "CRIT Supervisor running as root" by clarify run as root
+#   user not defined in supervisord.conf by default, so just append it after [supervisord] block
+sed -i "/\[supervisord\]/a user=root" /etc/supervisor/supervisord.conf
 
 # move nginx logs to ${GITLAB_LOG_DIR}/nginx
 sed -i \
@@ -313,8 +353,6 @@ command=bundle exec sidekiq -c {{SIDEKIQ_CONCURRENCY}}
   -C ${GITLAB_INSTALL_DIR}/config/sidekiq_queues.yml
   -e ${RAILS_ENV}
   -t {{SIDEKIQ_SHUTDOWN_TIMEOUT}}
-  -P ${GITLAB_INSTALL_DIR}/tmp/pids/sidekiq.pid
-  -L ${GITLAB_INSTALL_DIR}/log/sidekiq.log
 user=git
 autostart=true
 autorestart=true
@@ -430,4 +468,4 @@ rm -rf /var/lib/apt/lists/*
 # clean up caches
 rm -rf ${GITLAB_HOME}/.cache ${GITLAB_HOME}/.bundle ${GITLAB_HOME}/go
 rm -rf /root/.cache /root/.bundle ${GITLAB_HOME}/gitlab/node_modules
-rm -r /tmp/* 
+rm -r /tmp/*
