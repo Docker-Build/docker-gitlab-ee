@@ -56,7 +56,7 @@ RUN set -ex && \
  && rm -rf /var/lib/apt/lists/*
 
 COPY assets/build/ ${GITLAB_BUILD_DIR}/
-ARG GITLAB_EDITION=ce
+ARG GITLAB_EDITION=ee
 RUN bash ${GITLAB_BUILD_DIR}/install.sh
 
 COPY assets/runtime/ ${GITLAB_RUNTIME_DIR}/
